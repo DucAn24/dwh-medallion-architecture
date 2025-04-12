@@ -40,9 +40,11 @@ BEGIN
         BULK INSERT bronze.Customers
         FROM 'E:\dwh_project\datasets\Customers.csv'
         WITH (
-            FIRSTROW = 2,
-            FIELDTERMINATOR = ',',
-            TABLOCK
+				FIRSTROW = 2,
+				FIELDTERMINATOR = ',',
+				CODEPAGE = '65001', -- For UTF-8 encoding
+				FORMAT = 'CSV',
+				TABLOCK
         );
         SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
@@ -183,6 +185,7 @@ BEGIN
         WITH (
 			FIELDTERMINATOR = ',',
 			ROWTERMINATOR = '\n',
+			CODEPAGE = '65001',
 			FORMAT = 'CSV',
 			FIRSTROW = 2,
 			TABLOCK

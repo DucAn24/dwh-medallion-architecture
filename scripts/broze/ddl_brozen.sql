@@ -76,7 +76,7 @@ CREATE TABLE bronze.OrderDetails (
     ProductID INT,
     UnitPrice DECIMAL(10, 2),
     Quantity INT,
-    Discount DECIMAL(5, 2)
+    Discount NVARCHAR(MAX)
 );
 GO
 

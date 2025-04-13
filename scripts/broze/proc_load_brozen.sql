@@ -238,6 +238,36 @@ BEGIN
         PRINT '>> -------------';
 
 
+        PRINT '------------------------------------------------';
+        PRINT 'Loading Date Table';
+        PRINT '------------------------------------------------';
+
+        SET @start_time = GETDATE();
+
+        -- Truncate the target table to ensure a clean load
+        PRINT '>> Truncating Table: bronze.Date';
+        TRUNCATE TABLE bronze.Date;
+
+        -- Insert data into the bronze.DateDimension table
+        PRINT '>> Inserting Data Into: bronze.Date';
+
+		INSERT INTO bronze.Date (
+			date_key, full_date, day_of_week, day_num_in_month, day_num_overall,
+			day_name, day_abbrev, weekday_flag, week_num_in_year, week_num_overall,
+			week_begin_date, week_begin_date_key, month, month_num_overall,
+			month_name, month_abbrev, quarter, year, yearmo, fiscal_month,
+			fiscal_quarter, fiscal_year, last_day_in_month_flag, same_day_year_ago_date
+		)
+		SELECT *
+		FROM [Temp].[dbo].[Date_Dimension]
+		WHERE [year] BETWEEN 1996 AND 1998;
+
+        SET @end_time = GETDATE();
+
+        PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
+        PRINT '>> -------------';
+
+
 
         SET @batch_end_time = GETDATE();
         PRINT '==========================================';

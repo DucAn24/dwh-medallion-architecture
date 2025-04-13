@@ -124,7 +124,7 @@ CREATE TABLE silver.Products (
     UnitsInStock INT,
     UnitsOnOrder INT,
     ReorderLevel INT,
-    Discontinued BIT,
+    Discontinued NVARCHAR(1),
 	dwh_create_date    DATETIME2 DEFAULT GETDATE()
 );
 GO

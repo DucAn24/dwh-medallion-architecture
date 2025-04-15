@@ -36,7 +36,7 @@ BEGIN
 		-- Loading customers
 		SET @start_time = GETDATE();
 		PRINT '>> Truncating Table: silver.Customers';
-		TRUNCATE TABLE silver.Categories;
+		TRUNCATE TABLE silver.Customers;
 		PRINT '>> Inserting Data Into: silver.Customers';
 
 		INSERT INTO silver.Customers (
@@ -88,7 +88,7 @@ BEGIN
 		-- Loading Territories
 		SET @start_time = GETDATE();
 		PRINT '>> Truncating Table: silver.Territories';
-		TRUNCATE TABLE silver.Categories;
+		TRUNCATE TABLE silver.Territories;
 		PRINT '>> Inserting Data Into: silver.Territories';
 
 		INSERT INTO silver.Territories (
@@ -110,7 +110,7 @@ BEGIN
 		-- Loading Suppliers
 		SET @start_time = GETDATE();
 		PRINT '>> Truncating Table: silver.Suppliers';
-		TRUNCATE TABLE silver.Categories;
+		TRUNCATE TABLE silver.Suppliers;
 		PRINT '>> Inserting Data Into: silver.Suppliers';
 
 		INSERT INTO silver.Suppliers (
@@ -167,7 +167,7 @@ BEGIN
 		-- Loading Shippers
 		SET @start_time = GETDATE();
 		PRINT '>> Truncating Table: silver.Shippers';
-		TRUNCATE TABLE silver.Categories;
+		TRUNCATE TABLE silver.Shippers;
 		PRINT '>> Inserting Data Into: silver.Shippers';
 
 		INSERT INTO silver.Shippers (
@@ -301,15 +301,17 @@ BEGIN
         
 				CASE 
 					-- When ShipCountry contains postal code pattern, extract the postal code part
-					WHEN ShipPostalCode is null THEN 'N/A'
+					WHEN ShipPostalCode IS NULL THEN 'N/A'
 					WHEN ShipCountry LIKE '%,%' AND CHARINDEX(',', ShipCountry) > 0 
 					THEN 
-						SUBSTRING(
-							ShipCountry, 
-							1, 
-							CHARINDEX(',', ShipCountry)
+						REPLACE(
+							SUBSTRING(
+								ShipCountry, 
+								1, 
+								CHARINDEX(',', ShipCountry)
+							), ',', ''
 						)
-					ELSE ShipPostalCode
+					ELSE REPLACE(ShipPostalCode, ',', '')
 				END AS ShipPostalCode,
         
 				CASE 

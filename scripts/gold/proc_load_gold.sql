@@ -14,34 +14,33 @@ BEGIN
         SET @start_time = GETDATE();
         PRINT '>> Loading Table: gold.DimDate';
        
-        
-		INSERT INTO gold.DimDate (
-			DateKey, Date, DayOfWeek, DayName, DayOfMonth, DayOfYear,
-			WeekOfYear, MonthName, MonthOfYear, Quarter, QuarterName, Year, IsWeekday
-		)
-		SELECT 
-			date_key AS DateKey,
-			full_date AS Date,
-			day_of_week AS DayOfWeek,
-			day_name AS DayName,
-			day_num_in_month AS DayOfMonth,
-			day_num_overall AS DayOfYear,
-			week_num_in_year AS WeekOfYear,
-			month_name AS MonthName,
-			month AS MonthOfYear,
-			quarter AS Quarter,
-			CASE 
-				WHEN quarter >= 1 AND quarter <= 3 THEN 'First' 
-				WHEN quarter >= 4 AND quarter <= 6 THEN 'Second' 
-				WHEN quarter >= 7 AND quarter <= 9 THEN 'Third' 
-				WHEN quarter >= 10 AND quarter <= 12 THEN 'Fourth' 
-			END AS QuarterName,
-			year AS Year,
-			weekday_flag AS IsWeekday
-		FROM silver.Date s
-		WHERE NOT EXISTS (
-			SELECT 1 FROM gold.DimDate d WHERE d.DateKey = s.date_key
-		);
+        INSERT INTO gold.DimDate (
+            DateKey, Date, DayOfWeek, DayName, DayOfMonth, DayOfYear,
+            WeekOfYear, MonthName, MonthOfYear, Quarter, QuarterName, Year, IsWeekday
+        )
+        SELECT 
+            date_key AS DateKey,
+            full_date AS Date,
+            day_of_week AS DayOfWeek,
+            day_name AS DayName,
+            day_num_in_month AS DayOfMonth,
+            day_num_overall AS DayOfYear,
+            week_num_in_year AS WeekOfYear,
+            month_name AS MonthName,
+            month AS MonthOfYear,
+            quarter AS Quarter,
+            CASE 
+                WHEN quarter >= 1 AND quarter <= 3 THEN 'First' 
+                WHEN quarter >= 4 AND quarter <= 6 THEN 'Second' 
+                WHEN quarter >= 7 AND quarter <= 9 THEN 'Third' 
+                WHEN quarter >= 10 AND quarter <= 12 THEN 'Fourth' 
+            END AS QuarterName,
+            year AS Year,
+            weekday_flag AS IsWeekday
+        FROM silver.Date s
+        WHERE NOT EXISTS (
+            SELECT 1 FROM gold.DimDate d WHERE d.DateKey = s.date_key
+        );
         
         SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
@@ -188,13 +187,13 @@ BEGIN
         SET @start_time = GETDATE();
         PRINT '>> Loading Table: gold.DimProducts';
         
----------------- SCD Type 2 - Merge for DimProducts
+        -- SCD Type 2 - Merge for DimProducts
         MERGE gold.DimProducts AS target
         USING (
             SELECT 
                 p.ProductID,
                 p.ProductName,
-				p.Discontinued,
+                p.Discontinued,
                 c.CategoryName,
                 s.CompanyName AS SupplierName
             FROM silver.Products p
@@ -238,7 +237,7 @@ BEGIN
             SELECT 
                 p.ProductID,
                 p.ProductName,
-				p.Discontinued,
+                p.Discontinued,
                 c.CategoryName,
                 s.CompanyName AS SupplierName
             FROM silver.Products p
@@ -254,155 +253,150 @@ BEGIN
         PRINT '>> -------------';
 
 
------------------ Loading DimShipper with SCD Type 2
-		SET @start_time = GETDATE();
-		PRINT '>> Loading Table: gold.DimShipper';
+        -- Loading DimShipper with SCD Type 2
+        SET @start_time = GETDATE();
+        PRINT '>> Loading Table: gold.DimShipper';
         
-		-- SCD Type 2 - Merge for DimShipper
-		MERGE gold.DimShipper AS target
-		USING (
-			SELECT 
-				ShipperID,
-				CompanyName,
-				Phone
-			FROM silver.Shippers
-		) AS source
-		ON target.ShipperID = source.ShipperID AND target.RowIsCurrent = 1
+        -- SCD Type 2 - Merge for DimShipper
+        MERGE gold.DimShipper AS target
+        USING (
+            SELECT 
+                ShipperID,
+                CompanyName,
+                Phone
+            FROM silver.Shippers
+        ) AS source
+        ON target.ShipperID = source.ShipperID AND target.RowIsCurrent = 1
 
-		-- When matched and there's a change, update the current record to not current
-		WHEN MATCHED AND (
-			target.CompanyName <> source.CompanyName OR
-			ISNULL(target.Phone,'') <> ISNULL(source.Phone,'')
-		) THEN
-			UPDATE SET
-				RowIsCurrent = 0,
-				RowEndDate = GETDATE(),
-				RowChangeReason = 'Updated'
+        -- When matched and there's a change, update the current record to not current
+        WHEN MATCHED AND (
+            target.CompanyName <> source.CompanyName OR
+            ISNULL(target.Phone,'') <> ISNULL(source.Phone,'')
+        ) THEN
+            UPDATE SET
+                RowIsCurrent = 0,
+                RowEndDate = GETDATE(),
+                RowChangeReason = 'Updated'
 
-		-- When not matched by target, insert a new record
-		WHEN NOT MATCHED BY TARGET THEN
-			INSERT (
-				ShipperID, CompanyName, Phone,
-				RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason
-			)
-			VALUES (
-				source.ShipperID, source.CompanyName, source.Phone,
-				1, GETDATE(), '9999-12-31', 'Initial Load'
-			);
+        -- When not matched by target, insert a new record
+        WHEN NOT MATCHED BY TARGET THEN
+            INSERT (
+                ShipperID, CompanyName, Phone,
+                RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason
+            )
+            VALUES (
+                source.ShipperID, source.CompanyName, source.Phone,
+                1, GETDATE(), '9999-12-31', 'Initial Load'
+            );
 
-		SET @end_time = GETDATE();
+        SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '>> -------------';
 
 
-
-
------------ Loading DimSupplier with SCD Type 2
-		SET @start_time = GETDATE();
-		PRINT '>> Loading Table: gold.DimSupplier';
+        -- Loading DimSupplier with SCD Type 2
+        SET @start_time = GETDATE();
+        PRINT '>> Loading Table: gold.DimSupplier';
         
-		-- SCD Type 2 - Merge for DimSupplier
-		MERGE gold.DimSupplier AS target
-		USING (
-			SELECT 
-				SupplierID,
-				CompanyName,
-				ContactName,
-				ContactTitle,
-				Address,
-				City,
-				Region,
-				PostalCode,
-				Country,
-				Phone
-			FROM silver.Suppliers
-		) AS source
-		ON target.SupplierID = source.SupplierID AND target.RowIsCurrent = 1
+        -- SCD Type 2 - Merge for DimSupplier
+        MERGE gold.DimSupplier AS target
+        USING (
+            SELECT 
+                SupplierID,
+                CompanyName,
+                ContactName,
+                ContactTitle,
+                Address,
+                City,
+                Region,
+                PostalCode,
+                Country,
+                Phone
+            FROM silver.Suppliers
+        ) AS source
+        ON target.SupplierID = source.SupplierID AND target.RowIsCurrent = 1
 
-		-- When matched and there's a change, update the current record
-		WHEN MATCHED AND (
-			target.CompanyName <> source.CompanyName OR
-			ISNULL(target.ContactName,'') <> ISNULL(source.ContactName,'') OR
-			ISNULL(target.ContactTitle,'') <> ISNULL(source.ContactTitle,'') OR
-			ISNULL(target.Address,'') <> ISNULL(source.Address,'') OR
-			ISNULL(target.City,'') <> ISNULL(source.City,'') OR
-			ISNULL(target.Region,'') <> ISNULL(source.Region,'') OR
-			ISNULL(target.PostalCode,'') <> ISNULL(source.PostalCode,'') OR
-			ISNULL(target.Country,'') <> ISNULL(source.Country,'') OR
-			ISNULL(target.Phone,'') <> ISNULL(source.Phone,'')
-		) THEN
-			UPDATE SET
-				RowIsCurrent = 0,
-				RowEndDate = GETDATE(),
-				RowChangeReason = 'Updated'
+        -- When matched and there's a change, update the current record
+        WHEN MATCHED AND (
+            target.CompanyName <> source.CompanyName OR
+            ISNULL(target.ContactName,'') <> ISNULL(source.ContactName,'') OR
+            ISNULL(target.ContactTitle,'') <> ISNULL(source.ContactTitle,'') OR
+            ISNULL(target.Address,'') <> ISNULL(source.Address,'') OR
+            ISNULL(target.City,'') <> ISNULL(source.City,'') OR
+            ISNULL(target.Region,'') <> ISNULL(source.Region,'') OR
+            ISNULL(target.PostalCode,'') <> ISNULL(source.PostalCode,'') OR
+            ISNULL(target.Country,'') <> ISNULL(source.Country,'') OR
+            ISNULL(target.Phone,'') <> ISNULL(source.Phone,'')
+        ) THEN
+            UPDATE SET
+                RowIsCurrent = 0,
+                RowEndDate = GETDATE(),
+                RowChangeReason = 'Updated'
 
-		-- When not matched by target, insert a new record
-		WHEN NOT MATCHED BY TARGET THEN
-			INSERT (
-				SupplierID, CompanyName, ContactName, ContactTitle,
-				Address, City, Region, PostalCode, Country, Phone,
-				RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason
-			)
-			VALUES (
-				source.SupplierID, source.CompanyName, source.ContactName, source.ContactTitle,
-				source.Address, source.City, source.Region, source.PostalCode, source.Country, source.Phone,
-				1, GETDATE(), '9999-12-31', 'Initial Load'
-			);
+        -- When not matched by target, insert a new record
+        WHEN NOT MATCHED BY TARGET THEN
+            INSERT (
+                SupplierID, CompanyName, ContactName, ContactTitle,
+                Address, City, Region, PostalCode, Country, Phone,
+                RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason
+            )
+            VALUES (
+                source.SupplierID, source.CompanyName, source.ContactName, source.ContactTitle,
+                source.Address, source.City, source.Region, source.PostalCode, source.Country, source.Phone,
+                1, GETDATE(), '9999-12-31', 'Initial Load'
+            );
 
-		SET @end_time = GETDATE();
+        SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '>> -------------';
 
 
----------- Loading DimCategory
-		SET @start_time = GETDATE();
-		PRINT '>> Loading Table: gold.DimCategory';
+        -- Loading DimCategory
+        SET @start_time = GETDATE();
+        PRINT '>> Loading Table: gold.DimCategory';
 
-		MERGE gold.DimCategory AS target
-		USING (
-			SELECT 
-				CategoryID,
-				CategoryName,
-				Description
-			FROM silver.Categories
-		) AS source
-		ON target.CategoryID = source.CategoryID AND target.RowIsCurrent = 1
+        MERGE gold.DimCategory AS target
+        USING (
+            SELECT 
+                CategoryID,
+                CategoryName,
+                Description
+            FROM silver.Categories
+        ) AS source
+        ON target.CategoryID = source.CategoryID AND target.RowIsCurrent = 1
 
-		-- When matched and there's a change, update the current record
-		WHEN MATCHED AND (
-			target.CategoryName <> source.CategoryName OR
-			ISNULL(target.Description,'') <> ISNULL(source.Description,'')
-		) THEN
-			UPDATE SET
-				RowIsCurrent = 0,
-				RowEndDate = GETDATE(),
-				RowChangeReason = 'Updated'
+        -- When matched and there's a change, update the current record
+        WHEN MATCHED AND (
+            target.CategoryName <> source.CategoryName OR
+            ISNULL(target.Description,'') <> ISNULL(source.Description,'')
+        ) THEN
+            UPDATE SET
+                RowIsCurrent = 0,
+                RowEndDate = GETDATE(),
+                RowChangeReason = 'Updated'
 
-		-- When not matched by target, insert a new record
-		WHEN NOT MATCHED BY TARGET THEN
-			INSERT (
-				CategoryID, CategoryName, Description,
-				RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason
-			)
-			VALUES (
-				source.CategoryID, source.CategoryName, source.Description,
-				1, GETDATE(), '9999-12-31', 'Initial Load'
-			);
+        -- When not matched by target, insert a new record
+        WHEN NOT MATCHED BY TARGET THEN
+            INSERT (
+                CategoryID, CategoryName, Description,
+                RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason
+            )
+            VALUES (
+                source.CategoryID, source.CategoryName, source.Description,
+                1, GETDATE(), '9999-12-31', 'Initial Load'
+            );
 
-
-		SET @end_time = GETDATE();
+        SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '>> -------------';
 
         
----------------- Loading FactSales------------------------
-
-		SET @start_time = GETDATE();
-		PRINT '>> Truncating Table: gold.FactSales';
-		TRUNCATE TABLE gold.FactSales;
+        -- Loading FactSales
+        SET @start_time = GETDATE();
+        PRINT '>> Truncating Table: gold.FactSales';
+        TRUNCATE TABLE gold.FactSales;
         PRINT '>> Loading Table: gold.FactSales';
     
-        
         INSERT INTO gold.FactSales (
             OrderID, ProductKey, CustomerKey, EmployeeKey,
             OrderDateKey, ShippedDateKey, Quantity,
@@ -419,8 +413,8 @@ BEGIN
             END AS ShippedDateKey,
             od.Quantity,
             od.UnitPrice * od.Quantity AS ExtendedPriceAmount,
-			od.UnitPrice * od.Quantity * TRY_CAST(od.Discount AS FLOAT) AS DiscountAmount,
-			od.UnitPrice * od.Quantity * (1 - TRY_CAST(od.Discount AS FLOAT)) AS SoldAmount
+            od.UnitPrice * od.Quantity * TRY_CAST(od.Discount AS FLOAT) AS DiscountAmount,
+            od.UnitPrice * od.Quantity * (1 - TRY_CAST(od.Discount AS FLOAT)) AS SoldAmount
         FROM silver.OrderDetails od
         JOIN silver.Orders o ON od.OrderID = o.OrderID
         JOIN gold.DimProducts p ON od.ProductID = p.ProductID AND p.RowIsCurrent = 1
@@ -431,145 +425,175 @@ BEGIN
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '>> -------------';
         
------------- Loading FactOrderFulfillment------------------------
-
-		SET @start_time = GETDATE();
-		PRINT '>> Truncating Table: gold.FactOrderFulfillment';
-		TRUNCATE TABLE gold.FactOrderFulfillment;
+        -- Loading FactOrderFulfillment
+        SET @start_time = GETDATE();
+        PRINT '>> Truncating Table: gold.FactOrderFulfillment';
+        TRUNCATE TABLE gold.FactOrderFulfillment;
         PRINT '>> Loading Table: gold.FactOrderFulfillment';
         
+        -- More efficient approach using GROUP BY instead of subqueries
+        WITH OrderMetrics AS (
+            SELECT 
+                o.OrderID,
+                o.CustomerID,
+                o.EmployeeID,
+                o.ShipVia,
+                o.OrderDate,
+                o.RequiredDate,
+                o.ShippedDate,
+                o.Freight,
+                o.ShipRegion,
+                o.ShipCity,
+                o.ShipCountry,
+                DATEDIFF(DAY, o.OrderDate, ISNULL(o.ShippedDate, GETDATE())) as OrderToShipDays,
+                CASE 
+                    WHEN o.ShippedDate > o.RequiredDate THEN 1
+                    ELSE 0
+                END as IsOrderDelayed,
+                CASE 
+                    WHEN o.ShippedDate > o.RequiredDate THEN DATEDIFF(DAY, o.RequiredDate, o.ShippedDate)
+                    ELSE 0
+                END as DaysDelayed,
+                COUNT(od.ProductID) as TotalOrderItems,
+                SUM(od.UnitPrice * od.Quantity * (1 - CAST(od.Discount AS FLOAT))) as TotalOrderAmount
+            FROM silver.Orders o
+            LEFT JOIN silver.OrderDetails od ON o.OrderID = od.OrderID
+            GROUP BY 
+                o.OrderID,
+                o.CustomerID,
+                o.EmployeeID, 
+                o.ShipVia,
+                o.OrderDate,
+                o.RequiredDate,
+                o.ShippedDate,
+                o.Freight,
+                o.ShipRegion,
+                o.ShipCity,
+                o.ShipCountry
+        )
         INSERT INTO gold.FactOrderFulfillment (
-			OrderID, CustomerKey, EmployeeKey, ShipperKey,
-			OrderDateKey, RequiredDateKey, ShippedDateKey,
-			Freight, OrderToShipDays, IsOrderDelayed, DaysDelayed,
-			ShipRegion, ShipCity, ShipCountry, 
-			TotalOrderItems, TotalOrderAmount
-		)
-		SELECT 
-			o.OrderID,
-			c.CustomerKey,
-			e.EmployeeKey,
-			s.ShipperKey,
-			CONVERT(INT, FORMAT(o.OrderDate, 'yyyyMMdd')) AS OrderDateKey,
-			CONVERT(INT, FORMAT(o.RequiredDate, 'yyyyMMdd')) AS RequiredDateKey,
-			CASE WHEN o.ShippedDate IS NULL THEN NULL
-				ELSE CONVERT(INT, FORMAT(o.ShippedDate, 'yyyyMMdd'))
-			END AS ShippedDateKey,
-			o.Freight,
-			CASE WHEN o.ShippedDate IS NULL THEN NULL
-				ELSE DATEDIFF(DAY, o.OrderDate, o.ShippedDate)
-			END AS OrderToShipDays,
-			CASE WHEN o.ShippedDate IS NULL THEN NULL
-				WHEN o.ShippedDate > o.RequiredDate THEN 1
-				ELSE 0
-			END AS IsOrderDelayed,
-			CASE WHEN o.ShippedDate IS NULL THEN NULL
-				WHEN o.ShippedDate > o.RequiredDate THEN DATEDIFF(DAY, o.RequiredDate, o.ShippedDate)
-				ELSE 0
-			END AS DaysDelayed,
-			o.ShipRegion,
-			o.ShipCity,
-			o.ShipCountry,
-			-- Calculate number of items in order
-			(SELECT COUNT(*) FROM silver.OrderDetails WHERE OrderID = o.OrderID) AS TotalOrderItems,
-			-- Calculate total order amount
-			(SELECT SUM(UnitPrice * Quantity * (1 - CAST(Discount AS FLOAT))) 
-			 FROM silver.OrderDetails 
-			 WHERE OrderID = o.OrderID) AS TotalOrderAmount
-		FROM silver.Orders o
-		JOIN gold.DimCustomer c ON o.CustomerID = c.CustomerID AND c.RowIsCurrent = 1
-		JOIN gold.DimEmployee e ON o.EmployeeID = e.EmployeeID AND e.RowIsCurrent = 1
-		JOIN gold.DimShipper s ON o.ShipVia = s.ShipperID AND s.RowIsCurrent = 1;
+            OrderID, CustomerKey, EmployeeKey, ShipperKey,
+            OrderDateKey, RequiredDateKey, ShippedDateKey,
+            Freight, OrderToShipDays, IsOrderDelayed, DaysDelayed,
+            ShipRegion, ShipCity, ShipCountry, 
+            TotalOrderItems, TotalOrderAmount
+        )
+        SELECT 
+            om.OrderID,
+            c.CustomerKey,
+            e.EmployeeKey,
+            s.ShipperKey,
+            CONVERT(INT, FORMAT(om.OrderDate, 'yyyyMMdd')) AS OrderDateKey,
+            CONVERT(INT, FORMAT(om.RequiredDate, 'yyyyMMdd')) AS RequiredDateKey,
+            CASE WHEN om.ShippedDate IS NULL THEN NULL
+                ELSE CONVERT(INT, FORMAT(om.ShippedDate, 'yyyyMMdd'))
+            END AS ShippedDateKey,
+            om.Freight,
+            om.OrderToShipDays,
+            om.IsOrderDelayed,
+            om.DaysDelayed,
+            ISNULL(om.ShipRegion, 'N/A') AS ShipRegion,
+            om.ShipCity,
+            om.ShipCountry,
+            om.TotalOrderItems,
+            om.TotalOrderAmount
+        FROM OrderMetrics om
+        JOIN gold.DimCustomer c ON om.CustomerID = c.CustomerID AND c.RowIsCurrent = 1
+        JOIN gold.DimEmployee e ON om.EmployeeID = e.EmployeeID AND e.RowIsCurrent = 1
+        JOIN gold.DimShipper s ON om.ShipVia = s.ShipperID AND s.RowIsCurrent = 1;
         
         SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '>> -------------';
         
----------- Loading FactInventory---------------
-		
-		SET @start_time = GETDATE();
-		PRINT '>> Truncating Table: gold.FactInventory';
-		TRUNCATE TABLE gold.FactInventory;
+        -- Loading FactInventory
+        SET @start_time = GETDATE();
+        PRINT '>> Truncating Table: gold.FactInventory';
+        TRUNCATE TABLE gold.FactInventory;
         PRINT '>> Loading Table: gold.FactInventory';
 
-		INSERT INTO gold.FactInventory (
-			ProductKey, SupplierKey, CategoryKey,
-			UnitsInStock, UnitsOnOrder, ReorderLevel, LeadTimeDays,
-			Discontinued, InventoryValue, DaysSinceLastOrder,
-			DaysSinceLastShipment, StockCoverDays, QuantityPerUnit, SafetyStockLevel
-		)
-		SELECT 
-			p.ProductKey,
-			s.SupplierKey,
-			c.CategoryKey,
-			sp.UnitsInStock,
-			sp.UnitsOnOrder,
-			sp.ReorderLevel,
-			-- Estimated lead time from order data
-			(SELECT AVG(DATEDIFF(DAY, o.OrderDate, o.ShippedDate))
-				FROM silver.Orders o
-				JOIN silver.OrderDetails od ON o.OrderID = od.OrderID
-				WHERE od.ProductID = sp.ProductID
-				AND o.ShippedDate IS NOT NULL) AS LeadTimeDays,
-			sp.Discontinued,
-			sp.UnitPrice * sp.UnitsInStock AS InventoryValue,
-			-- Days since last order
-			CASE 
-				WHEN EXISTS (
-					SELECT 1 FROM silver.OrderDetails od
-					JOIN silver.Orders o ON od.OrderID = o.OrderID
-					WHERE od.ProductID = sp.ProductID
-				) THEN 
-					DATEDIFF(DAY, 
-						(SELECT MAX(o.OrderDate) FROM silver.OrderDetails od
-						JOIN silver.Orders o ON od.OrderID = o.OrderID
-						WHERE od.ProductID = sp.ProductID), 
-						GETDATE())
-				ELSE NULL
-			END AS DaysSinceLastOrder,
-			-- Days since last shipment
-			CASE 
-				WHEN EXISTS (
-					SELECT 1 FROM silver.OrderDetails od
-					JOIN silver.Orders o ON od.OrderID = o.OrderID
-					WHERE od.ProductID = sp.ProductID AND o.ShippedDate IS NOT NULL
-				) THEN 
-					DATEDIFF(DAY, 
-						(SELECT MAX(o.ShippedDate) FROM silver.OrderDetails od
-						JOIN silver.Orders o ON od.OrderID = o.OrderID
-						WHERE od.ProductID = sp.ProductID AND o.ShippedDate IS NOT NULL), 
-						GETDATE())
-				ELSE NULL
-			END AS DaysSinceLastShipment,
-			-- Stock cover days (based on average daily sales)
-			CASE 
-				WHEN sp.UnitsInStock > 0 THEN
-					sp.UnitsInStock / 
-					NULLIF((SELECT SUM(od.Quantity) / NULLIF(DATEDIFF(DAY, MIN(o.OrderDate), MAX(o.OrderDate)), 0)
-							FROM silver.OrderDetails od
-							JOIN silver.Orders o ON od.OrderID = o.OrderID
-							WHERE od.ProductID = sp.ProductID), 0)
-				ELSE 0
-			END AS StockCoverDays,
-			sp.QuantityPerUnit,
-			-- Calculate safety stock (ReorderLevel + 20%)
-			CASE 
-				WHEN sp.ReorderLevel IS NOT NULL THEN sp.ReorderLevel * 1.2
-				ELSE NULL
-			END AS SafetyStockLevel
-		FROM silver.Products sp
-		JOIN gold.DimProducts p ON sp.ProductID = p.ProductID AND p.RowIsCurrent = 1
-		JOIN gold.DimSupplier s ON sp.SupplierID = s.SupplierID AND s.RowIsCurrent = 1
-		JOIN gold.DimCategory c ON sp.CategoryID = c.CategoryID AND c.RowIsCurrent = 1;
+        -- More efficient approach using GROUP BY instead of multiple subqueries
+        WITH InventoryMetrics AS (
+            SELECT 
+                sp.ProductID,
+                sp.SupplierID,
+                sp.CategoryID,
+                sp.UnitsInStock,
+                sp.UnitsOnOrder,
+                sp.ReorderLevel,
+                sp.Discontinued,
+                sp.UnitPrice,
+                sp.QuantityPerUnit,
+                -- Calculate inventory value
+                sp.UnitPrice * sp.UnitsInStock AS InventoryValue,
+                -- Calculate lead time, order dates, and sales metrics in one pass
+                AVG(DATEDIFF(DAY, o.OrderDate, o.ShippedDate)) AS LeadTimeDays,
+                MAX(o.OrderDate) AS LastOrderDate,
+                MAX(o.ShippedDate) AS LastShipmentDate,
+                SUM(od.Quantity) AS TotalQuantitySold,
+                COUNT(DISTINCT o.OrderID) AS NumberOfOrders,
+                DATEDIFF(DAY, MIN(o.OrderDate), MAX(o.OrderDate)) AS SalesPeriodDays
+            FROM silver.Products sp
+            LEFT JOIN silver.OrderDetails od ON sp.ProductID = od.ProductID
+            LEFT JOIN silver.Orders o ON od.OrderID = o.OrderID AND o.ShippedDate IS NOT NULL
+            GROUP BY 
+                sp.ProductID,
+                sp.SupplierID,
+                sp.CategoryID,
+                sp.UnitsInStock,
+                sp.UnitsOnOrder,
+                sp.ReorderLevel,
+                sp.Discontinued,
+                sp.UnitPrice,
+                sp.QuantityPerUnit
+        )
+        INSERT INTO gold.FactInventory (
+            ProductKey, SupplierKey, CategoryKey,
+            UnitsInStock, UnitsOnOrder, ReorderLevel, LeadTimeDays,
+            Discontinued, InventoryValue, DaysSinceLastOrder,
+            DaysSinceLastShipment, StockCoverDays, QuantityPerUnit, SafetyStockLevel
+        )
+        SELECT 
+            p.ProductKey,
+            s.SupplierKey,
+            c.CategoryKey,
+            im.UnitsInStock,
+            im.UnitsOnOrder,
+            im.ReorderLevel,
+            im.LeadTimeDays,
+            im.Discontinued,
+            im.InventoryValue,
+            -- Days since last order
+            CASE 
+                WHEN im.LastOrderDate IS NOT NULL THEN DATEDIFF(DAY, im.LastOrderDate, GETDATE())
+                ELSE NULL
+            END AS DaysSinceLastOrder,
+            -- Days since last shipment
+            CASE 
+                WHEN im.LastShipmentDate IS NOT NULL THEN DATEDIFF(DAY, im.LastShipmentDate, GETDATE())
+                ELSE NULL
+            END AS DaysSinceLastShipment,
+            -- Stock cover days (based on average daily sales)
+            CASE 
+                WHEN im.UnitsInStock > 0 AND im.TotalQuantitySold > 0 AND im.SalesPeriodDays > 0 THEN
+                    im.UnitsInStock / NULLIF((im.TotalQuantitySold / NULLIF(im.SalesPeriodDays, 0)), 0)
+                ELSE 0
+            END AS StockCoverDays,
+            im.QuantityPerUnit,
+            -- Calculate safety stock (ReorderLevel + 20%)
+            CASE 
+                WHEN im.ReorderLevel IS NOT NULL THEN im.ReorderLevel * 1.2
+                ELSE NULL
+            END AS SafetyStockLevel
+        FROM InventoryMetrics im
+        JOIN gold.DimProducts p ON im.ProductID = p.ProductID AND p.RowIsCurrent = 1
+        JOIN gold.DimSupplier s ON im.SupplierID = s.SupplierID AND s.RowIsCurrent = 1
+        JOIN gold.DimCategory c ON im.CategoryID = c.CategoryID AND c.RowIsCurrent = 1;
         
         SET @end_time = GETDATE();
         PRINT '>> Load Duration: ' + CAST(DATEDIFF(SECOND, @start_time, @end_time) AS NVARCHAR) + ' seconds';
         PRINT '>> -------------';
 
-
-
-
-        
         SET @batch_end_time = GETDATE();
         PRINT '=========================================='
         PRINT 'Loading Gold Layer is Completed';

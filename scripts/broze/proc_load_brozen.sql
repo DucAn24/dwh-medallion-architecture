@@ -19,7 +19,7 @@ BEGIN
         TRUNCATE TABLE bronze.Categories;
         PRINT '>> Inserting Data Into: bronze.Categories';
         BULK INSERT bronze.Categories
-        FROM 'E:\dwh_project\datasets\Categories.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Categories.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -38,7 +38,7 @@ BEGIN
         TRUNCATE TABLE bronze.Customers;
         PRINT '>> Inserting Data Into: bronze.Customers';
         BULK INSERT bronze.Customers
-        FROM 'E:\dwh_project\datasets\Customers.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Customers.csv'
         WITH (
 				FIRSTROW = 2,
 				FIELDTERMINATOR = ',',
@@ -60,7 +60,7 @@ BEGIN
         TRUNCATE TABLE bronze.Employees;
         PRINT '>> Inserting Data Into: bronze.Employees';
         BULK INSERT bronze.Employees
-        FROM 'E:\dwh_project\datasets\Employees.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Employees.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -81,7 +81,7 @@ BEGIN
         TRUNCATE TABLE bronze.EmployeeTerritories;
         PRINT '>> Inserting Data Into: bronze.EmployeeTerritories';
         BULK INSERT bronze.EmployeeTerritories
-        FROM 'E:\dwh_project\datasets\EmployeeTerritories.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\EmployeeTerritories.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -100,7 +100,7 @@ BEGIN
         TRUNCATE TABLE bronze.Region;
         PRINT '>> Inserting Data Into: bronze.Region';
         BULK INSERT bronze.Region
-        FROM 'E:\dwh_project\datasets\Region.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Region.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -119,7 +119,7 @@ BEGIN
         TRUNCATE TABLE bronze.Shippers;
         PRINT '>> Inserting Data Into: bronze.Shippers';
         BULK INSERT bronze.Shippers
-        FROM 'E:\dwh_project\datasets\Shippers.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Shippers.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -138,7 +138,7 @@ BEGIN
         TRUNCATE TABLE bronze.Suppliers;
         PRINT '>> Inserting Data Into: bronze.Suppliers';
         BULK INSERT bronze.Suppliers
-        FROM 'E:\dwh_project\datasets\Suppliers.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Suppliers.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -159,7 +159,7 @@ BEGIN
         TRUNCATE TABLE bronze.Territories;
         PRINT '>> Inserting Data Into: bronze.Territories';
         BULK INSERT bronze.Territories
-        FROM 'E:\dwh_project\datasets\Territories.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Territories.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -181,7 +181,7 @@ BEGIN
         TRUNCATE TABLE bronze.Products;
         PRINT '>> Inserting Data Into: bronze.Products';
         BULK INSERT bronze.Products
-        FROM 'E:\dwh_project\datasets\Products.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Products.csv'
         WITH (
 			FIELDTERMINATOR = ',',
 			ROWTERMINATOR = '\n',
@@ -205,7 +205,7 @@ BEGIN
         TRUNCATE TABLE bronze.OrderDetails;
         PRINT '>> Inserting Data Into: bronze.OrderDetails';
         BULK INSERT bronze.OrderDetails
-        FROM 'E:\dwh_project\datasets\OrderDetails.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\OrderDetails.csv'
         WITH (
             FIRSTROW = 2,
             FIELDTERMINATOR = ',',
@@ -227,7 +227,7 @@ BEGIN
         TRUNCATE TABLE bronze.Orders;
         PRINT '>> Inserting Data Into: bronze.Orders';
         BULK INSERT bronze.Orders
-        FROM 'E:\dwh_project\datasets\Orders.csv'
+        FROM 'E:\Projects\sql-dwh-project\datasets\Orders.csv'
         WITH (
 			FIELDTERMINATOR = ',',
 			ROWTERMINATOR = '\n',
@@ -244,11 +244,9 @@ BEGIN
 
         SET @start_time = GETDATE();
 
-        -- Truncate the target table to ensure a clean load
         PRINT '>> Truncating Table: bronze.Date';
         TRUNCATE TABLE bronze.Date;
 
-        -- Insert data into the bronze.DateDimension table
         PRINT '>> Inserting Data Into: bronze.Date';
 
 		INSERT INTO bronze.Date (

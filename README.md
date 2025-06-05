@@ -29,56 +29,12 @@ A comprehensive data warehouse for the Northwind database using medallion archit
 - **Structure**: Star schema with enforced foreign keys
 - **Script**: `scripts/gold/proc_load_gold.sql`
 
-![Screenshot 2025-06-05 233449](https://github.com/user-attachments/assets/a76d0d66-2b6d-4140-9015-1f3a46d7c26b)
-
 ---
 ## 📊 Data Modeling Approaches
 
-### Star Schema (Current Implementation)
-```
-Facts (Center) ← Connected to → Dimensions (Points)
-- FactSales ← → DimCustomer, DimEmployee, DimProduct, DimDate
-- FactOrderFulfillment ← → DimDate, DimCustomer, DimShipper
-- FactInventory ← → DimProduct, DimSupplier, DimCategory
-```
+### Star Schema 
 
-**Advantages:**
-- Simple queries with minimal JOINs
-- Fast query performance
-- Easy to understand for business users
-- Optimized for OLAP operations
-
-### Galaxy Schema (Snowflake Extension)
-```
-Facts ← → Dimensions ← → Normalized Sub-Dimensions
-- DimProduct → DimCategory → DimCategoryGroup
-- DimCustomer → DimGeography → DimCountry → DimRegion
-- DimEmployee → DimDepartment → DimDivision
-```
-
-**Implementation Example:**
-```sql
--- Normalized Geography
-DimCountry: CountryKey, CountryName, RegionKey
-DimRegion: RegionKey, RegionName, ContinentKey
-DimContinent: ContinentKey, ContinentName
-
--- Normalized Product Hierarchy  
-DimCategory: CategoryKey, CategoryName, CategoryGroupKey
-DimCategoryGroup: CategoryGroupKey, GroupName, DivisionKey
-DimDivision: DivisionKey, DivisionName
-```
-
-**Advantages:**
-- Eliminates data redundancy
-- Better data integrity
-- Easier maintenance of reference data
-- More flexible for complex hierarchies
-
-**Trade-offs:**
-- More complex queries (additional JOINs)
-- Slightly slower performance
-- Requires more sophisticated ETL
+![Screenshot 2025-06-05 233449](https://github.com/user-attachments/assets/a76d0d66-2b6d-4140-9015-1f3a46d7c26b)
 
 ---
 ## 📈 Business Data Model
@@ -142,24 +98,3 @@ sql-dwh-project/
 2. **Order Fulfillment**: Delivery metrics, shipping cost optimization
 3. **Inventory Management**: Stock levels, valuation, reorder alerts
 
----
-## 🛠️ Technical Features
-
-- **Historical Tracking**: Complete SCD Type 2 implementation
-- **Data Quality**: Automated cleansing and standardization
-- **Performance**: Optimized star schema for fast queries
-- **Scalability**: Medallion architecture supports data growth
-- **Schema Flexibility**: Support for both Star and Galaxy schemas
-
----
-## 📋 Requirements
-
-- SQL Server 2019+
-- Power BI Desktop
-- Northwind CSV dataset
-- BULK INSERT permissions
-
----
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

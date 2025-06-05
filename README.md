@@ -29,6 +29,8 @@ A comprehensive data warehouse for the Northwind database using medallion archit
 - **Structure**: Star schema with enforced foreign keys
 - **Script**: `scripts/gold/proc_load_gold.sql`
 
+![Screenshot 2025-06-05 233449](https://github.com/user-attachments/assets/a76d0d66-2b6d-4140-9015-1f3a46d7c26b)
+
 ---
 ## 📊 Data Modeling Approaches
 
